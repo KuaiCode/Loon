@@ -1,64 +1,39 @@
 # Loon
 
-自用 Loon 插件与脚本。
+自用 Loon 插件与脚本仓库。
 
-当前包含：
-
-- WeTalk 自动化签到 + 视频奖励
-- PingMe 自动化签到 + 视频奖励
+本仓库主要用于存放从其他脚本平台适配到 Loon 的脚本、插件配置，以及个人使用过程中需要的日志增强和小幅维护。
 
 ## 目录结构
 
 ```text
 Loon
-├── JavaScript
-│   ├── WeTalk.js
-│   └── PingMe.js
-└── Plugin
-    ├── WeTalk.lpx
-    ├── PingMe.lpx
-    └── WeTalk_PingMe.lpx
+├── JavaScript   # 脚本文件
+└── Plugin       # Loon 插件文件
 ```
 
-## 插件链接
+## 使用说明
 
-单独使用：
+1. 在 Loon 中导入需要使用的 `.lpx` 插件。
+2. 根据插件需求开启重写、脚本、MITM 等相关功能。
+3. 首次使用时，按脚本说明进入对应 App 或页面触发参数抓取。
+4. 抓取成功后，后续任务由 Loon 的脚本或定时任务执行。
+5. 如果任务异常，优先查看 Loon 日志，再检查参数是否过期、MITM 是否启用、脚本是否更新到最新版本。
 
-```text
-https://raw.githubusercontent.com/KuaiCode/Loon/main/Plugin/WeTalk.lpx
-https://raw.githubusercontent.com/KuaiCode/Loon/main/Plugin/PingMe.lpx
-```
+## 更新说明
 
-合并使用：
+- 插件配置尽量保持简洁，只做 Loon 适配所需的配置。
+- JavaScript 脚本中会保留必要日志，方便在 Loon 中排查抓取、执行和通知结果。
+- 本仓库内容以个人自用为主，不保证长期可用。
 
-```text
-https://raw.githubusercontent.com/KuaiCode/Loon/main/Plugin/WeTalk_PingMe.lpx
-```
+## 鸣谢
 
-## 使用方法
+部分脚本来源或参考自以下项目：
 
-1. 在 Loon 中添加 `.lpx` 插件。
-2. 开启插件、重写、MITM，并确认对应 hostname 已启用证书解密。
-3. 打开对应 App，进入会触发余额查询的页面。
-4. 看到“账号参数已入库 / 账号参数已更新”通知后，说明抓取成功。
-5. 后续由 Loon 定时任务自动执行签到和视频奖励。
+- https://github.com/ZenmoFeiShi/Qx/
 
-## 定时任务
-
-| 插件 | 执行时间 |
-| --- | --- |
-| WeTalk | 每天 08:20、20:20 |
-| PingMe | 每天 08:30、20:30 |
-
-## 失效处理
-
-如果出现未抓到账号、登录失效、签到失败等情况：
-
-1. 确认插件和 MITM 已启用；
-2. 重新打开 App 触发抓取；
-3. 等待通知提示账号参数更新；
-4. 手动运行对应签到脚本测试。
+感谢原作者的脚本整理与维护。
 
 ## 免责声明
 
-本仓库内容仅供个人学习和自用。使用前请自行确认相关 App 的服务条款和风险。
+本仓库内容仅供学习和个人自用。使用前请自行确认相关服务条款和风险，由使用者自行承担相应责任。
