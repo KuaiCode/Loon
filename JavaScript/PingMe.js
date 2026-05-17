@@ -282,7 +282,27 @@ function buildHeaders(capture, ua) {
   return headers;
 }
 
+function nowText() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function log(message) {
+  try {
+    console.log(`【${scriptName}】[${nowText()}] ${String(message)}`);
+  } catch (e) {}
+}
+
+function logBlock(title, lines) {
+  const arr = Array.isArray(lines) ? lines : [lines];
+  log(`${title}
+${arr.map(x => String(x)).join('\n')}`);
+}
+
 function notify(title, body) {
+  const lines = body ? String(body).split('\n') : [];
+  logBlock(`通知：${title}`, lines);
   $notify(scriptName, title, body);
 }
 
@@ -360,6 +380,7 @@ function runAccount(acc, index, total) {
 }
 
 if (typeof $request !== 'undefined' && $request) {
+  log('进入参数抓取模式：已拦截 queryBalanceAndBonus 请求');
   const paramsRaw = parseRawQuery($request.url);
   const headersMap = normalizeHeaderNameMap($request.headers || {});
   let baseUA = '';
@@ -385,12 +406,25 @@ if (typeof $request !== 'undefined' && $request) {
   saveStore(store);
 
   const total = store.order.length;
+  logBlock('抓取结果', [
+    `操作：${existed ? '更新已有账号' : '新增账号'}`,
+    `账号：${alias}`,
+    `账号ID：${fp}`,
+    `当前账号总数：${total}`,
+    `请求参数字段数：${Object.keys(paramsRaw).length}`,
+    `请求头字段数：${Object.keys(headersMap).length}`,
+    `User-Agent：${baseUA ? '已抓取' : '未抓取'}`
+  ]);
   notify(existed ? '🔄 账号参数已更新' : '✅ 新账号已入库', `${alias}（id:${fp}）\n当前账号总数：${total}`);
-  console.log(`【${scriptName}】${existed ? 'update' : 'add'} account ${fp}\n${JSON.stringify(store.accounts[fp], null, 2)}`);
   $done({});
 } else {
+  log('进入定时签到模式');
   const store = loadStore();
   const ids = store.order.filter(id => store.accounts[id]);
+  logBlock('读取账号列表', ids.length ? ids.map((id, idx) => {
+    const acc = store.accounts[id];
+    return `账号${idx + 1}：${acc.alias || acc.email || acc.id}`;
+  }) : ['无可用账号']);
   if (!ids.length) {
     notify('⚠️ 未抓到任何账号', '请先打开 PingMe 触发抓包');
     $done();
@@ -399,15 +433,25 @@ if (typeof $request !== 'undefined' && $request) {
     const results = [];
     let chain = Promise.resolve();
     ids.forEach((id, idx) => {
-      chain = chain.then(() => runAccount(store.accounts[id], idx, total))
-        .then(text => { results.push(text); })
+      chain = chain.then(() => {
+          const acc = store.accounts[id];
+          log(`开始执行账号${idx + 1}/${total}：${acc.alias || acc.email || acc.id}`);
+          return runAccount(acc, idx, total);
+        })
+        .then(text => {
+          results.push(text);
+          logBlock('账号执行结果', String(text).split('\n'));
+        })
         .then(() => idx < ids.length - 1 ? sleep(ACCOUNT_GAP) : null);
     });
     chain.then(() => {
+      logBlock('全部账号执行完成', results.join('\n———\n').split('\n'));
       notify(`🎉 全部完成 (${total}个账号)`, results.join('\n———\n'));
       $done();
     }).catch(err => {
-      notify('❌ 任务异常', results.join('\n———\n') + '\n' + (err.error || String(err)));
+      const errText = err && err.error ? err.error : String(err);
+      logBlock('任务异常', (results.join('\n———\n') + '\n' + errText).split('\n'));
+      notify('❌ 任务异常', results.join('\n———\n') + '\n' + errText);
       $done();
     });
   }
